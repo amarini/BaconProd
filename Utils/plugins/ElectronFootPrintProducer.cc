@@ -67,6 +67,7 @@ class ElectronFootPrintProducer : public edm::stream::EDProducer<> {
       // token
       edm::EDGetTokenT<reco::GsfElectronCollection> electronsT_;
       edm::EDGetTokenT<reco::PFCandidateCollection> pfCandidatesT_;
+      edm::ParameterSet pfBlockBasedIsolationSetUp_ ;
 };
 
 //
@@ -85,6 +86,8 @@ ElectronFootPrintProducer::ElectronFootPrintProducer(const edm::ParameterSet& iC
 {
    // name of the value map
    label_ = iConfig.getParameter<std::string>("label");
+   
+   pfBlockBasedIsolationSetUp_ = iConfig.getParameter<edm::ParameterSet>("pfBlockBasedIsolationSetUp"); 
 
    //consumes 
    pfCandidatesT_ = consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>("pfCandidates"));
@@ -144,10 +147,10 @@ ElectronFootPrintProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
 	     }
 	     */
 	     // -- PF Based --
-	     for (int iC=0; iC< ele.numberOfSourceCandidatePtrs() ;++iC)
+	     for (unsigned iC=0; iC< ele.numberOfSourceCandidatePtrs() ;++iC)
 	     {
 	    		const auto& sc = ele.sourceCandidatePtr(iC);  
-			TLorentzVector candV ( cand.px(),cand.py(),cand.pz(),cand.energy() );	
+			TLorentzVector candV ( sc->px(),sc->py(),sc->pz(),sc->energy() );	
 			fp+=candV;
 	     }
 	
@@ -159,14 +162,13 @@ ElectronFootPrintProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
      edm::ValueMap<TLorentzVector>::Filler filler(*out);
      filler.insert(electronsHandle, product.begin(), product.end());
      filler.fill();
-     iEvent.put(out, label_.c_str());
+     iEvent.put(std::move(out), label_.c_str());
 }
 
 void 
 ElectronFootPrintProducer::beginRun(edm::Run const& iRun, edm::EventSetup const& iSetup){
 	 thePFBlockBasedIsolation_ . reset( new PFBlockBasedIsolation() );
-	 edm::ParameterSet pfBlockBasedIsolationSetUp = conf_.getParameter<edm::ParameterSet>("pfBlockBasedIsolationSetUp"); 
-	 thePFBlockBasedIsolation_ ->setup(pfBlockBasedIsolationSetUp);
+	 thePFBlockBasedIsolation_ ->setup(pfBlockBasedIsolationSetUp_);
 }
 
 // ------------ method called once each stream before processing any runs, lumis or events  ------------

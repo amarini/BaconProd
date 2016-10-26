@@ -1,0 +1,4 @@
+<lcgdict>
+	<class name="edm::ValueMap<TLorentzVector>" />
+	<class name="edm::Wrapper<edm::ValueMap<TLorentzVector> >" />
+</lcgdict>
